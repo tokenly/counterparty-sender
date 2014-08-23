@@ -1,0 +1,1 @@
+The CounterpartySender component for UTipdMe.
