@@ -18,10 +18,17 @@ class CounterpartySender
     }
 
     public function send($public_key, $private_key, $source, $destination, $quantity, $asset, $other_counterparty_vars=[]) {
+        // build the raw transaction
         $raw_transaction_hex = $this->createSend($public_key, $private_key, $source, $destination, $quantity, $asset, $other_counterparty_vars);
 
-        throw new Exception("Unimplemented...", 1);
-        
+        // sign the transaction
+        $result = $this->bitcoin_client->signrawtransaction($raw_transaction_hex, [], [$private_key]);
+        $signed_transaction_hex = $result->hex;
+        if (!$signed_transaction_hex) { throw new Exception("Failed to sign transaction", 1); }
+
+        // broadcast to the network
+        $transaction_id = $this->bitcoin_client->sendrawtransaction($signed_transaction_hex);
+        return $transaction_id;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -37,9 +44,8 @@ class CounterpartySender
         ];
         $vars = array_merge($vars, $other_counterparty_vars);
 
-        $response = $this->xcpd_client->create_send($vars);
-        echo "\$response:\n".json_encode($response, 192)."\n";
-
+        $raw_transaction_hex = $this->xcpd_client->create_send($vars);
+        return $raw_transaction_hex;
     }
 
 }
