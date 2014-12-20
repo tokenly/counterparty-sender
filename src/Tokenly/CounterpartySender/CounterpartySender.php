@@ -1,6 +1,6 @@
 <?php
 
-namespace Utipd\CounterpartySender;
+namespace Tokenly\CounterpartySender;
 
 use Exception;
 

@@ -1,1 +1,1 @@
-The CounterpartySender component for UTipdMe.
+The CounterpartySender component for Tokenly.
