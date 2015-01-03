@@ -12,9 +12,9 @@ class CounterpartySender
 
     ////////////////////////////////////////////////////////////////////////
 
-    public function __construct($xcpd_client, $bitcoin_client) {
-        $this->xcpd_client = $xcpd_client;
-        $this->bitcoin_client = $bitcoin_client;
+    public function __construct($xcpd_client, $bitcoind_client) {
+        $this->xcpd_client     = $xcpd_client;
+        $this->bitcoind_client = $bitcoind_client;
     }
 
     public function send($public_key, $private_key, $source, $destination, $quantity, $asset, $other_counterparty_vars=[]) {
@@ -67,12 +67,12 @@ class CounterpartySender
 
     protected function signAndSendRawTransaction($raw_transaction_hex, $private_key) {
         // sign the transaction
-        $result = $this->bitcoin_client->signrawtransaction($raw_transaction_hex, [], [$private_key]);
+        $result = $this->bitcoind_client->signrawtransaction($raw_transaction_hex, [], [$private_key]);
         $signed_transaction_hex = $result->hex;
         if (!$signed_transaction_hex) { throw new Exception("Failed to sign transaction", 1); }
 
         // broadcast to the network
-        $transaction_id = $this->bitcoin_client->sendrawtransaction($signed_transaction_hex);
+        $transaction_id = $this->bitcoind_client->sendrawtransaction($signed_transaction_hex);
         return $transaction_id;
     }
 
