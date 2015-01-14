@@ -45,6 +45,7 @@ class CounterpartySender
             'asset'       => $asset,
         ];
         $vars = array_merge($vars, $other_counterparty_vars);
+        \Illuminate\Support\Facades\Log::info('\$vars: '.json_encode($vars, 192));
 
         $raw_transaction_hex = $this->xcpd_client->create_send($vars);
         return $raw_transaction_hex;

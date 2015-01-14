@@ -29,7 +29,11 @@ class CounterpartySenderServiceProvider extends ServiceProvider
 
         $this->app->bind('Nbobtc\Bitcoind\Bitcoind', function($app) {
             $config = $app['config']['bitcoin'];
-            $connection_string = "{$config['scheme']}://{$config['rpcUser']}:{$config['rpcPassword']}@{$config['host']}:{$config['port']}";
+
+            // \Illuminate\Support\Facades\Log::info('$config:'.json_encode($config, 192));
+            $url_pieces = parse_url($config['connection_string']);
+            $connection_string = "{$url_pieces['scheme']}://{$config['rpc_user']}:{$config['rpc_password']}@{$url_pieces['host']}:{$url_pieces['port']}";
+
             $bitcoin_client = new Client($connection_string);
             $bitcoind = new Bitcoind($bitcoin_client);
             return $bitcoind;
