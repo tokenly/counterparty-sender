@@ -3,6 +3,7 @@
 namespace Tokenly\CounterpartySender\Provider;
 
 use Exception;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
 use Nbobtc\Bitcoind\Bitcoind;
 use Nbobtc\Bitcoind\Client;
@@ -25,15 +26,14 @@ class CounterpartySenderServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->package('tokenly/counterparty-sender', 'counterparty-sender', __DIR__.'/../../');
+        $this->bindConfig();
 
         $this->app->bind('Nbobtc\Bitcoind\Bitcoind', function($app) {
-            $config = $app['config']['bitcoin'];
+            $url_pieces = parse_url(Config::get('counterparty-sender.connection_string'));
+            $rpc_user = Config::get('counterparty-sender.rpc_user');
+            $rpc_password = Config::get('counterparty-sender.rpc_password');
 
-            // \Illuminate\Support\Facades\Log::info('$config:'.json_encode($config, 192));
-            $url_pieces = parse_url($config['connection_string']);
-            $connection_string = "{$url_pieces['scheme']}://{$config['rpc_user']}:{$config['rpc_password']}@{$url_pieces['host']}:{$url_pieces['port']}";
-
+            $connection_string = "{$url_pieces['scheme']}://{$rpc_user}:{$rpc_password}@{$url_pieces['host']}:{$url_pieces['port']}";
             $bitcoin_client = new Client($connection_string);
             $bitcoind = new Bitcoind($bitcoin_client);
             return $bitcoind;
@@ -48,6 +48,21 @@ class CounterpartySenderServiceProvider extends ServiceProvider
             return $sender;
         });
     }
+
+    protected function bindConfig()
+    {
+
+        // simple config
+        $config = [
+            'counterparty-sender.connection_string' => env('NATIVE_CONNECTION_STRING', 'http://localhost:8332'),
+            'counterparty-sender.rpc_user'          => env('NATIVE_RPC_USER', null),
+            'counterparty-sender.rpc_password'      => env('NATIVE_RPC_PASSWORD', null),
+        ];
+
+        // set the laravel config
+        Config::set($config);
+    }
+
 
 }
 
