@@ -3,6 +3,7 @@
 namespace Tokenly\CounterpartySender;
 
 use Exception;
+use Tokenly\CounterpartySender\Transaction\Transaction;
 
 /*
 * CounterpartySender
@@ -15,6 +16,17 @@ class CounterpartySender
     public function __construct($xcpd_client, $bitcoind_client) {
         $this->xcpd_client     = $xcpd_client;
         $this->bitcoind_client = $bitcoind_client;
+    }
+
+    public function buildSendTransaction($public_key, $private_key, $source, $destination, $quantity, $asset, $other_counterparty_vars=[]) {
+        // build the raw transaction
+        $raw_transaction_hex = $this->createSendTransactionHex($public_key, $private_key, $source, $destination, $quantity, $asset, $other_counterparty_vars);
+
+        // sign the transacton
+        $signed_transaction_hex = $this->signRawTransaction($raw_transaction_hex, $private_key);
+        if (!$signed_transaction_hex) { throw new Exception("Failed to sign transaction", 1); }
+
+        return new Transaction($signed_transaction_hex);
     }
 
     public function send($public_key, $private_key, $source, $destination, $quantity, $asset, $other_counterparty_vars=[]) {
@@ -67,14 +79,28 @@ class CounterpartySender
 
     protected function signAndSendRawTransaction($raw_transaction_hex, $private_key) {
         // sign the transaction
-        $result = $this->bitcoind_client->signrawtransaction($raw_transaction_hex, [], [$private_key]);
-        $signed_transaction_hex = $result->hex;
+        $signed_transaction_hex = $this->signRawTransaction($raw_transaction_hex, $private_key);
         if (!$signed_transaction_hex) { throw new Exception("Failed to sign transaction", 1); }
 
+        // broadcast to the network
+        $transaction_id = $this->sendSignedTransaction($signed_transaction_hex);
+        if (!$transaction_id) { throw new Exception("Failed to broadcast transaction", 1); }
+        return $transaction_id;
+    }
+
+    protected function signRawTransaction($raw_transaction_hex, $private_key) {
+        // sign the transaction
+        $result = $this->bitcoind_client->signrawtransaction($raw_transaction_hex, [], [$private_key]);
+        $signed_transaction_hex = $result->hex;
+        return $signed_transaction_hex;
+    }
+
+    protected function sendSignedTransaction($signed_transaction_hex) {
         // broadcast to the network
         $transaction_id = $this->bitcoind_client->sendrawtransaction($signed_transaction_hex);
         return $transaction_id;
     }
+
 
 
 }
