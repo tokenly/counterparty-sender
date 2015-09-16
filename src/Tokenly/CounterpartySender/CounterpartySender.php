@@ -26,7 +26,7 @@ class CounterpartySender
         $signed_transaction_hex = $this->signRawTransaction($raw_transaction_hex, $private_key);
         if (!$signed_transaction_hex) { throw new Exception("Failed to sign transaction", 1); }
 
-        return new Transaction($signed_transaction_hex);
+        return $signed_transaction_hex;
     }
 
     public function send($public_key, $private_key, $source, $destination, $quantity, $asset, $other_counterparty_vars=[]) {
